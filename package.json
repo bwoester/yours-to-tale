@@ -1,0 +1,16 @@
+{
+  "name": "yours-to-tale",
+  "private": true,
+  "description": "AI-powered platform for creating, personalizing, and listening to fairy tales.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w apps/web",
+    "build:web": "npm run build -w apps/web",
+    "lint:web": "npm run lint -w apps/web",
+    "lint": "npm run lint -w apps/web",
+    "prepare": "npm run prepare -w apps/web"
+  }
+}
