@@ -9,8 +9,10 @@
   "scripts": {
     "dev:web": "npm run dev -w apps/web",
     "build:web": "npm run build -w apps/web",
-    "lint:web": "npm run lint -w apps/web",
-    "lint": "npm run lint -w apps/web",
-    "prepare": "npm run prepare -w apps/web"
+    "lint:web": "npm run lint -w apps/web"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "unrs-resolver@1.12.2": true
   }
 }
