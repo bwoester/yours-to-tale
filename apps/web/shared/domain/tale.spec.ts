@@ -1,20 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { TaleSchema, TaleStructureSchema, TaleGenerationRequestSchema, deriveProse } from './tale';
-import {z} from "zod";
+import { z } from 'zod';
 
 describe('Tale Domain', () => {
   const validSpeaker = {
     id: 'narrator',
     name: 'Narrator',
     role: 'narrator' as const,
-    voice: { description: 'Calm voice' }
+    voice: { description: 'Calm voice' },
   };
 
   const validCharacter = {
     id: 'cinderella',
     name: 'Cinderella',
     role: 'character' as const,
-    voice: { description: 'Kind voice' }
+    voice: { description: 'Kind voice' },
   };
 
   const validTale = {
@@ -24,10 +24,10 @@ describe('Tale Domain', () => {
       {
         segments: [
           { text: 'Once upon a time', speakerId: 'narrator', emotion: 'neutral' },
-          { text: 'I want to go to the stars!', speakerId: 'cinderella', emotion: 'excited' }
-        ]
-      }
-    ]
+          { text: 'I want to go to the stars!', speakerId: 'cinderella', emotion: 'excited' },
+        ],
+      },
+    ],
   };
 
   describe('TaleSchema Validation', () => {
@@ -39,17 +39,17 @@ describe('Tale Domain', () => {
     it('should fail if speaker IDs are not unique', () => {
       const invalidTale = {
         ...validTale,
-        speakers: [validSpeaker, { ...validSpeaker, name: 'Duplicate' }]
+        speakers: [validSpeaker, { ...validSpeaker, name: 'Duplicate' }],
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                message: 'Speaker IDs must be unique'
-              })
-            ])
+          expect.arrayContaining([
+            expect.objectContaining({
+              message: 'Speaker IDs must be unique',
+            }),
+          ]),
         );
       }
     });
@@ -57,17 +57,17 @@ describe('Tale Domain', () => {
     it('should fail if there is no narrator', () => {
       const invalidTale = {
         ...validTale,
-        speakers: [validCharacter]
+        speakers: [validCharacter],
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                message: expect.stringContaining('Tale must have exactly one narrator')
-              })
-            ])
+          expect.arrayContaining([
+            expect.objectContaining({
+              message: expect.stringContaining('Tale must have exactly one narrator'),
+            }),
+          ]),
         );
       }
     });
@@ -75,17 +75,17 @@ describe('Tale Domain', () => {
     it('should fail if there are multiple narrators', () => {
       const invalidTale = {
         ...validTale,
-        speakers: [validSpeaker, { ...validSpeaker, id: 'narrator2' }]
+        speakers: [validSpeaker, { ...validSpeaker, id: 'narrator2' }],
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                message: expect.stringContaining('Tale must have exactly one narrator')
-              })
-            ])
+          expect.arrayContaining([
+            expect.objectContaining({
+              message: expect.stringContaining('Tale must have exactly one narrator'),
+            }),
+          ]),
         );
       }
     });
@@ -96,20 +96,20 @@ describe('Tale Domain', () => {
         paragraphs: [
           {
             segments: [
-              { text: 'Hello', speakerId: 'unknown', emotion: 'neutral' }
-            ]
-          }
-        ]
+              { text: 'Hello', speakerId: 'unknown', emotion: 'neutral' },
+            ],
+          },
+        ],
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                message: expect.stringContaining("Speaker ID 'unknown' not found")
-              })
-            ])
+          expect.arrayContaining([
+            expect.objectContaining({
+              message: expect.stringContaining('Speaker ID \'unknown\' not found'),
+            }),
+          ]),
         );
       }
     });
@@ -117,7 +117,7 @@ describe('Tale Domain', () => {
     it('should fail if strings are empty or only whitespace', () => {
       const invalidTale = {
         ...validTale,
-        title: '   '
+        title: '   ',
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
@@ -126,7 +126,7 @@ describe('Tale Domain', () => {
     it('should fail if paragraphs are empty', () => {
       const invalidTale = {
         ...validTale,
-        paragraphs: []
+        paragraphs: [],
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
@@ -135,7 +135,7 @@ describe('Tale Domain', () => {
     it('should fail if segments are empty', () => {
       const invalidTale = {
         ...validTale,
-        paragraphs: [{ segments: [] }]
+        paragraphs: [{ segments: [] }],
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
@@ -151,18 +151,18 @@ describe('Tale Domain', () => {
           {
             segments: [
               { text: 'Part 1.', speakerId: 'narrator', emotion: 'neutral' },
-              { text: 'Part 2.', speakerId: 'narrator', emotion: 'neutral' }
-            ]
+              { text: 'Part 2.', speakerId: 'narrator', emotion: 'neutral' },
+            ],
           },
           {
             segments: [
-              { text: 'Part 3.', speakerId: 'narrator', emotion: 'neutral' }
-            ]
-          }
-        ]
+              { text: 'Part 3.', speakerId: 'narrator', emotion: 'neutral' },
+            ],
+          },
+        ],
       });
       expect(deriveProse(tale))
-          .toBe('Part 1. Part 2.\n\nPart 3.');
+        .toBe('Part 1. Part 2.\n\nPart 3.');
     });
   });
 
@@ -179,7 +179,7 @@ describe('Tale Domain', () => {
     const validRequest = {
       sourceTale: 'Cinderella',
       twist: 'in space',
-      language: 'de'
+      language: 'de',
     };
 
     it('accepts a valid request', () => {
@@ -190,7 +190,7 @@ describe('Tale Domain', () => {
     it('trims sourceTale', () => {
       const result = TaleGenerationRequestSchema.parse({
         ...validRequest,
-        sourceTale: '  Cinderella  '
+        sourceTale: '  Cinderella  ',
       });
       expect(result.sourceTale).toBe('Cinderella');
     });
@@ -198,7 +198,7 @@ describe('Tale Domain', () => {
     it('trims twist', () => {
       const result = TaleGenerationRequestSchema.parse({
         ...validRequest,
-        twist: '  in space  '
+        twist: '  in space  ',
       });
       expect(result.twist).toBe('in space');
     });
@@ -206,7 +206,7 @@ describe('Tale Domain', () => {
     it('rejects an empty sourceTale', () => {
       const result = TaleGenerationRequestSchema.safeParse({
         ...validRequest,
-        sourceTale: ''
+        sourceTale: '',
       });
       expect(result.success).toBe(false);
     });
@@ -214,7 +214,7 @@ describe('Tale Domain', () => {
     it('rejects a whitespace-only sourceTale', () => {
       const result = TaleGenerationRequestSchema.safeParse({
         ...validRequest,
-        sourceTale: '   '
+        sourceTale: '   ',
       });
       expect(result.success).toBe(false);
     });
@@ -222,7 +222,7 @@ describe('Tale Domain', () => {
     it('rejects an empty twist', () => {
       const result = TaleGenerationRequestSchema.safeParse({
         ...validRequest,
-        twist: ''
+        twist: '',
       });
       expect(result.success).toBe(false);
     });
@@ -230,7 +230,7 @@ describe('Tale Domain', () => {
     it('rejects a whitespace-only twist', () => {
       const result = TaleGenerationRequestSchema.safeParse({
         ...validRequest,
-        twist: '   '
+        twist: '   ',
       });
       expect(result.success).toBe(false);
     });
@@ -238,7 +238,7 @@ describe('Tale Domain', () => {
     it('rejects a language other than "de"', () => {
       const result = TaleGenerationRequestSchema.safeParse({
         ...validRequest,
-        language: 'en'
+        language: 'en',
       });
       expect(result.success).toBe(false);
     });

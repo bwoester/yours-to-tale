@@ -5,38 +5,38 @@ export const SpeakerSchema = z.object({
   name: z.string().trim().min(1),
   role: z.enum(['narrator', 'character']),
   voice: z.object({
-    description: z.string().trim().min(1)
-  })
+    description: z.string().trim().min(1),
+  }),
 });
 
 export const TaleSegmentSchema = z.object({
   text: z.string().trim().min(1),
   speakerId: z.string().trim().min(1),
-  emotion: z.string().trim().min(1) // e.g., "excited", "happy", "neutral"
+  emotion: z.string().trim().min(1), // e.g., "excited", "happy", "neutral"
 });
 
 export const TaleParagraphSchema = z.object({
-  segments: z.array(TaleSegmentSchema).min(1)
+  segments: z.array(TaleSegmentSchema).min(1),
 });
 
 export const TaleStructureSchema = z.object({
   title: z.string().trim().min(1),
   speakers: z.array(SpeakerSchema).min(1),
-  paragraphs: z.array(TaleParagraphSchema).min(1)
+  paragraphs: z.array(TaleParagraphSchema).min(1),
 });
 
 export const TaleSchema = TaleStructureSchema.check((data) => {
   const { value, issues } = data;
   const speakers = value.speakers;
   const speakerIds = new Set(speakers.map(s => s.id));
-  
+
   // Unique Speaker IDs
   if (speakerIds.size !== speakers.length) {
     issues.push({
       code: 'custom',
       message: 'Speaker IDs must be unique',
       path: ['speakers'],
-      input: speakers
+      input: speakers,
     });
   }
 
@@ -47,7 +47,7 @@ export const TaleSchema = TaleStructureSchema.check((data) => {
       code: 'custom',
       message: `Tale must have exactly one narrator (found ${narratorCount})`,
       path: ['speakers'],
-      input: speakers
+      input: speakers,
     });
   }
 
@@ -59,7 +59,7 @@ export const TaleSchema = TaleStructureSchema.check((data) => {
           code: 'custom',
           message: `Speaker ID '${segment.speakerId}' not found in speakers list`,
           path: ['paragraphs', pIdx, 'segments', sIdx, 'speakerId'],
-          input: segment.speakerId
+          input: segment.speakerId,
         });
       }
     });
@@ -69,7 +69,7 @@ export const TaleSchema = TaleStructureSchema.check((data) => {
 export const TaleGenerationRequestSchema = z.object({
   sourceTale: z.string().trim().min(1),
   twist: z.string().trim().min(1),
-  language: z.literal('de')
+  language: z.literal('de'),
 });
 
 export type Tale = z.infer<typeof TaleSchema>;
@@ -83,10 +83,10 @@ export type TaleGenerationRequest = z.infer<typeof TaleGenerationRequestSchema>;
  */
 export function deriveProse(tale: Tale): string {
   return tale.paragraphs
-      .map(paragraph =>
-          paragraph.segments
-              .map(segment => segment.text)
-              .join(' ')
-      )
-      .join('\n\n')
+    .map(paragraph =>
+      paragraph.segments
+        .map(segment => segment.text)
+        .join(' '),
+    )
+    .join('\n\n');
 }

@@ -1,4 +1,4 @@
-import type { Tale, TaleGenerationRequest } from '../../shared/domain/tale';
+import type { Tale, TaleGenerationRequest } from '#shared/domain/tale';
 
 export interface TaleGenerator {
   /**
