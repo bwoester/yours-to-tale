@@ -2,6 +2,10 @@
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint'],
   devtools: { enabled: true },
+  runtimeConfig: {
+    geminiApiKey: '',
+    geminiModel: 'gemini-3.6-flash',
+  },
   compatibilityDate: '2026-08-09',
   eslint: {
     config: {
