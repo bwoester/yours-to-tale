@@ -76,17 +76,3 @@ export type Tale = z.infer<typeof TaleSchema>;
 export type TaleStructure = z.infer<typeof TaleStructureSchema>;
 export type Speaker = z.infer<typeof SpeakerSchema>;
 export type TaleGenerationRequest = z.infer<typeof TaleGenerationRequestSchema>;
-
-/**
- * Derives the readable prose from the structured tale.
- * Paragraphs are separated by double newlines, segments are joined by a space.
- */
-export function deriveProse(tale: Tale): string {
-  return tale.paragraphs
-    .map(paragraph =>
-      paragraph.segments
-        .map(segment => segment.text)
-        .join(' '),
-    )
-    .join('\n\n');
-}

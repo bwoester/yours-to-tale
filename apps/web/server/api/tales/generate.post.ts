@@ -1,4 +1,3 @@
-import { useRuntimeConfig } from '#imports';
 import { createGenerateTaleHandler } from './generate-handler';
 import { GeminiTaleGenerator } from '#server/infrastructure/gemini/gemini-tale-generator';
 

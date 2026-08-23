@@ -11,9 +11,10 @@
     "dev:web": "npm run dev -w apps/web",
     "lint:web": "npm run lint -w apps/web",
     "lint:web:fix": "npm run lint:fix -w apps/web",
+    "prepare:web": "npm exec -w apps/web -- nuxt prepare",
     "test:web": "npm run test -w apps/web",
     "typecheck:web": "npm run typecheck -w apps/web",
-    "validate:web": "npm run test:web && npm run lint:web && npm run typecheck:web && npm run build:web"
+    "validate:web": "npm run prepare:web && npm run test:web && npm run lint:web && npm run typecheck:web && npm run build:web"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,

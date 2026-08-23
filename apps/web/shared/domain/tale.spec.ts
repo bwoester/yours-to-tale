@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TaleSchema, TaleStructureSchema, TaleGenerationRequestSchema, deriveProse } from './tale';
+import { TaleSchema, TaleStructureSchema, TaleGenerationRequestSchema } from './tale';
 import { z } from 'zod';
 
 describe('Tale Domain', () => {
@@ -139,30 +139,6 @@ describe('Tale Domain', () => {
       };
       const result = TaleSchema.safeParse(invalidTale);
       expect(result.success).toBe(false);
-    });
-  });
-
-  describe('Prose Derivation', () => {
-    it('should correctly derive prose from segments and paragraphs', () => {
-      const tale = TaleSchema.parse({
-        title: 'Test',
-        speakers: [validSpeaker],
-        paragraphs: [
-          {
-            segments: [
-              { text: 'Part 1.', speakerId: 'narrator', emotion: 'neutral' },
-              { text: 'Part 2.', speakerId: 'narrator', emotion: 'neutral' },
-            ],
-          },
-          {
-            segments: [
-              { text: 'Part 3.', speakerId: 'narrator', emotion: 'neutral' },
-            ],
-          },
-        ],
-      });
-      expect(deriveProse(tale))
-        .toBe('Part 1. Part 2.\n\nPart 3.');
     });
   });
 
