@@ -45,16 +45,21 @@ function speakerFor(speakerId: string) {
 }
 
 function removeOuterQuotes(text: string) {
-  const trimmedText = text.trim();
-  const quotePairs: Array<[string, string]> = [
-    ['„', '“'],
-    ['"', '"'],
-    ['“', '”'],
-  ];
+  let trimmedText = text.trim();
+  const openingQuotes = ['„', '"', '“'];
+  const closingQuotes = ['“', '”', '"'];
 
-  for (const [opening, closing] of quotePairs) {
-    if (trimmedText.startsWith(opening) && trimmedText.endsWith(closing) && trimmedText.length > opening.length + closing.length) {
-      return trimmedText.slice(opening.length, -closing.length).trim();
+  for (const opening of openingQuotes) {
+    if (trimmedText.startsWith(opening)) {
+      trimmedText = trimmedText.slice(opening.length).trim();
+      break;
+    }
+  }
+
+  for (const closing of closingQuotes) {
+    if (trimmedText.endsWith(closing)) {
+      trimmedText = trimmedText.slice(0, -closing.length).trim();
+      break;
     }
   }
 
@@ -64,6 +69,16 @@ function removeOuterQuotes(text: string) {
 function formatTurnText(text: string, role: 'narrator' | 'character') {
   const normalizedText = role === 'character' ? removeOuterQuotes(text) : text.trim();
   return role === 'character' ? `„${normalizedText}“` : normalizedText;
+}
+
+const leadingPunctuation = /^[,.!?;:]/;
+
+function formatTurnSpacing(turn: ProseTurn, turnIndex: number) {
+  if (turnIndex === 0 || leadingPunctuation.test(turn.text)) {
+    return turn.text;
+  }
+
+  return ` ${turn.text}`;
 }
 
 const proseParagraphs = computed<ProseParagraph[]>(() => props.tale.paragraphs.map((paragraph) => {
@@ -113,8 +128,8 @@ function stableHue(value: string) {
 
   for (const character of value) {
     hue = (
-        hue * 31
-        + (character.codePointAt(0) ?? 0)
+      hue * 31
+      + (character.codePointAt(0) ?? 0)
     ) % 360;
   }
 
@@ -187,18 +202,17 @@ function speakerStyle(speakerId: string) {
       class="prose"
       aria-label="Märchen als Prosa"
     >
-      <div
+      <p
         v-for="(paragraph, paragraphIndex) in proseParagraphs"
         :key="paragraphIndex"
         class="prose-paragraph"
       >
-        <p
+        <span
           v-for="(turn, turnIndex) in paragraph"
           :key="`${paragraphIndex}-${turnIndex}`"
-        >
-          {{ turn.text }}
-        </p>
-      </div>
+          class="prose-turn"
+        >{{ formatTurnSpacing(turn, turnIndex) }}</span>
+      </p>
     </article>
 
     <article
@@ -280,8 +294,6 @@ function speakerStyle(speakerId: string) {
 .prose { color: #342a23; font: 1.12rem/1.85 Georgia, serif; }
 .prose-paragraph { margin: 0 0 1.35rem; }
 .prose-paragraph:last-child { margin-bottom: 0; }
-.prose p { margin: 0 0 0.8rem; }
-.prose p:last-child { margin-bottom: 0; }
 .highlighted { color: #342a23; font-size: 1.05rem; line-height: 1.8; }
 .highlighted p { margin: 0 0 1.35rem; }
 .highlighted p:last-child { margin-bottom: 0; }

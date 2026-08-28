@@ -90,6 +90,12 @@ export class GeminiTaleGenerator implements TaleGenerator {
 
     const input = `Quelle: "${request.sourceTale}"\nWendung: "${request.twist}"`;
 
+    // TODO: Before exposing tale generation to external users, implement the
+    // production child-safety pipeline: define the supported age range and content
+    // policy, configure Gemini safety thresholds explicitly, validate user input,
+    // moderate generated output before storage, display, or TTS, provide safe
+    // fallbacks and abuse controls, and add adversarial safety tests.
+    // The system prompt alone must not be treated as a security boundary.
     const interaction = await this.client.interactions.create({
       model: this.model,
       system_instruction: systemInstruction,

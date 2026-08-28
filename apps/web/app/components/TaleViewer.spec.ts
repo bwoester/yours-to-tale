@@ -31,7 +31,7 @@ function modeButton(wrapper: ReturnType<typeof mount>, label: string) {
 }
 
 describe('TaleViewer', () => {
-  it('derives speaker turns with German dialogue formatting and preserves paragraphs', () => {
+  it('derives inline speaker turns with German dialogue formatting and 1-to-1 paragraph mapping', () => {
     const original = structuredClone(tale);
     const wrapper = mount(TaleViewer, { props: { tale } });
     const paragraphs = wrapper.findAll('.prose-paragraph');
@@ -39,13 +39,219 @@ describe('TaleViewer', () => {
     expect(wrapper.find('.prose').exists()).toBe(true);
     expect(wrapper.find('h2').text()).toBe(tale.title);
     expect(paragraphs).toHaveLength(2);
-    expect(paragraphs[0]!.findAll('p')).toHaveLength(4);
-    expect(paragraphs[0]!.findAll('p')[0]!.text()).toBe('Im Tal begann ein Abenteuer.');
-    expect(paragraphs[0]!.findAll('p')[1]!.text()).toBe('„Hallo! Komm mit mir.“');
-    expect(paragraphs[0]!.findAll('p')[2]!.text()).toBe('„Ich kenne den Weg.“');
-    expect(paragraphs[0]!.findAll('p')[3]!.text()).toBe('Also gingen sie los.');
-    expect(paragraphs[1]!.find('p').text()).toBe('„Schon gut. Und weiter.“');
+    for (const paragraph of paragraphs) {
+      expect(paragraph.element.tagName).toBe('P');
+    }
+
+    const firstParagraphTurns = paragraphs[0]!.findAll('.prose-turn');
+    expect(firstParagraphTurns).toHaveLength(4);
+    for (const turn of firstParagraphTurns) {
+      expect(turn.element.tagName).toBe('SPAN');
+    }
+    expect(firstParagraphTurns[0]!.text()).toBe('Im Tal begann ein Abenteuer.');
+    expect(firstParagraphTurns[1]!.text()).toBe('„Hallo! Komm mit mir.“');
+    expect(firstParagraphTurns[2]!.text()).toBe('„Ich kenne den Weg.“');
+    expect(firstParagraphTurns[3]!.text()).toBe('Also gingen sie los.');
+    expect(paragraphs[0]!.text()).toBe('Im Tal begann ein Abenteuer. „Hallo! Komm mit mir.“ „Ich kenne den Weg.“ Also gingen sie los.');
+
+    const secondParagraphTurns = paragraphs[1]!.findAll('.prose-turn');
+    expect(secondParagraphTurns).toHaveLength(1);
+    expect(secondParagraphTurns[0]!.element.tagName).toBe('SPAN');
+    expect(secondParagraphTurns[0]!.text()).toBe('„Schon gut. Und weiter.“');
+    expect(paragraphs[1]!.text()).toBe('„Schon gut. Und weiter.“');
+
     expect(JSON.stringify(tale)).toBe(JSON.stringify(original));
+  });
+
+  it('formats character speech followed by narrator attribution with leading punctuation seamlessly', () => {
+    const attributionTale = {
+      title: 'Rotkäppchen Ausschnitt',
+      speakers: [
+        { id: 'narrator', name: 'Erzähler', role: 'narrator' as const, voice: { description: 'Ruhig' } },
+        { id: 'mother', name: 'Mutter', role: 'character' as const, voice: { description: 'Sanft' } },
+      ],
+      paragraphs: [
+        {
+          segments: [
+            { text: 'Sieh einmal, Rotkäppchen', speakerId: 'mother', emotion: 'liebevoll' },
+            { text: ', sagte die Mutter,', speakerId: 'narrator', emotion: 'neutral' },
+            { text: 'hier hast du ein Stück Kuchen.', speakerId: 'mother', emotion: 'freundlich' },
+          ],
+        },
+      ],
+    };
+
+    const wrapper = mount(TaleViewer, { props: { tale: attributionTale } });
+    const paragraphs = wrapper.findAll('.prose-paragraph');
+
+    expect(paragraphs).toHaveLength(1);
+    expect(paragraphs[0]!.element.tagName).toBe('P');
+    for (const turn of paragraphs[0]!.findAll('.prose-turn')) {
+      expect(turn.element.tagName).toBe('SPAN');
+    }
+    expect(paragraphs[0]!.text()).toBe('„Sieh einmal, Rotkäppchen“, sagte die Mutter, „hier hast du ein Stück Kuchen.“');
+  });
+
+  it('formats character speech followed by narration without leading punctuation with standard spacing', () => {
+    const speechTale = {
+      title: 'Begrüßung',
+      speakers: [
+        { id: 'narrator', name: 'Erzähler', role: 'narrator' as const, voice: { description: 'Ruhig' } },
+        { id: 'mira', name: 'Mira', role: 'character' as const, voice: { description: 'Hell' } },
+      ],
+      paragraphs: [
+        {
+          segments: [
+            { text: 'Hallo!', speakerId: 'mira', emotion: 'fröhlich' },
+            { text: 'Sie winkte fröhlich.', speakerId: 'narrator', emotion: 'erfreut' },
+          ],
+        },
+      ],
+    };
+
+    const wrapper = mount(TaleViewer, { props: { tale: speechTale } });
+    const paragraphs = wrapper.findAll('.prose-paragraph');
+
+    expect(paragraphs).toHaveLength(1);
+    expect(paragraphs[0]!.element.tagName).toBe('P');
+    for (const turn of paragraphs[0]!.findAll('.prose-turn')) {
+      expect(turn.element.tagName).toBe('SPAN');
+    }
+    expect(paragraphs[0]!.text()).toBe('„Hallo!“ Sie winkte fröhlich.');
+  });
+
+  it('preserves distinct paragraphs without cross-paragraph merging or splitting', () => {
+    const multiParagraphTale = {
+      title: 'Zwei Absätze',
+      speakers: [
+        { id: 'narrator', name: 'Erzähler', role: 'narrator' as const, voice: { description: 'Ruhig' } },
+        { id: 'wolf', name: 'Wolf', role: 'character' as const, voice: { description: 'Grollend' } },
+      ],
+      paragraphs: [
+        {
+          segments: [
+            { text: 'Wo willst du hin?', speakerId: 'wolf', emotion: 'drohend' },
+          ],
+        },
+        {
+          segments: [
+            { text: ', fragte der Wolf laut.', speakerId: 'narrator', emotion: 'erzählend' },
+          ],
+        },
+      ],
+    };
+
+    const wrapper = mount(TaleViewer, { props: { tale: multiParagraphTale } });
+    const paragraphs = wrapper.findAll('.prose-paragraph');
+
+    expect(paragraphs).toHaveLength(2);
+    for (const paragraph of paragraphs) {
+      expect(paragraph.element.tagName).toBe('P');
+    }
+    expect(paragraphs[0]!.text()).toBe('„Wo willst du hin?“');
+    expect(paragraphs[1]!.text()).toBe(', fragte der Wolf laut.');
+  });
+
+  it('does not split a paragraph containing multiple distinct character speakers', () => {
+    const multiCharacterParagraphTale = {
+      title: 'Zwei Sprecher in einem Absatz',
+      speakers: [
+        { id: 'narrator', name: 'Erzähler', role: 'narrator' as const, voice: { description: 'Ruhig' } },
+        { id: 'speaker-a', name: 'Mira', role: 'character' as const, voice: { description: 'Hell' } },
+        { id: 'speaker-b', name: 'Taro', role: 'character' as const, voice: { description: 'Tief' } },
+      ],
+      paragraphs: [
+        {
+          segments: [
+            { text: 'Komm mit!', speakerId: 'speaker-a', emotion: 'eifrig' },
+            { text: 'Ich bin bereit.', speakerId: 'speaker-b', emotion: 'entschlossen' },
+          ],
+        },
+      ],
+    };
+
+    const wrapper = mount(TaleViewer, { props: { tale: multiCharacterParagraphTale } });
+    const paragraphs = wrapper.findAll('.prose-paragraph');
+
+    expect(paragraphs).toHaveLength(1);
+    expect(paragraphs[0]!.element.tagName).toBe('P');
+    for (const turn of paragraphs[0]!.findAll('.prose-turn')) {
+      expect(turn.element.tagName).toBe('SPAN');
+    }
+    expect(paragraphs[0]!.text()).toBe('„Komm mit!“ „Ich bin bereit.“');
+  });
+
+  it('handles existing correctly paired quotation marks idempotently without duplicating them', () => {
+    const quotedTale = {
+      title: 'Bereits zitierte Abschnitte',
+      speakers: [
+        { id: 'narrator', name: 'Erzähler', role: 'narrator' as const, voice: { description: 'Ruhig' } },
+        { id: 'speaker-a', name: 'Mira', role: 'character' as const, voice: { description: 'Hell' } },
+      ],
+      paragraphs: [
+        {
+          segments: [
+            { text: '„Guten Tag!“', speakerId: 'speaker-a', emotion: 'freundlich' },
+            { text: '"Schön hier."', speakerId: 'speaker-a', emotion: 'glücklich' },
+            { text: '“Auf Wiedersehen!”', speakerId: 'speaker-a', emotion: 'heiter' },
+          ],
+        },
+      ],
+    };
+
+    const wrapper = mount(TaleViewer, { props: { tale: quotedTale } });
+    const paragraphs = wrapper.findAll('.prose-paragraph');
+
+    expect(paragraphs).toHaveLength(1);
+    expect(paragraphs[0]!.element.tagName).toBe('P');
+    for (const turn of paragraphs[0]!.findAll('.prose-turn')) {
+      expect(turn.element.tagName).toBe('SPAN');
+    }
+    expect(paragraphs[0]!.text()).toBe('„Guten Tag! Schön hier. Auf Wiedersehen!“');
+  });
+
+  it('normalizes mixed, one-sided, and malformed outer quotation marks without duplicating quotes', () => {
+    const malformedTale = {
+      title: 'Gemischte Anführungszeichen',
+      speakers: [
+        { id: 'narrator', name: 'Erzähler', role: 'narrator' as const, voice: { description: 'Ruhig' } },
+        { id: 'speaker-a', name: 'Mira', role: 'character' as const, voice: { description: 'Hell' } },
+      ],
+      paragraphs: [
+        {
+          segments: [
+            { text: '„Guten Tag!"', speakerId: 'speaker-a', emotion: 'freundlich' },
+          ],
+        },
+        {
+          segments: [
+            { text: '"Guten Tag!“', speakerId: 'speaker-a', emotion: 'freundlich' },
+          ],
+        },
+        {
+          segments: [
+            { text: '„Guten Tag!', speakerId: 'speaker-a', emotion: 'freundlich' },
+          ],
+        },
+        {
+          segments: [
+            { text: 'Guten Tag!“', speakerId: 'speaker-a', emotion: 'freundlich' },
+          ],
+        },
+      ],
+    };
+
+    const wrapper = mount(TaleViewer, { props: { tale: malformedTale } });
+    const paragraphs = wrapper.findAll('.prose-paragraph');
+
+    expect(paragraphs).toHaveLength(4);
+    for (const paragraph of paragraphs) {
+      expect(paragraph.element.tagName).toBe('P');
+      expect(paragraph.text()).toBe('„Guten Tag!“');
+      const turns = paragraph.findAll('.prose-turn');
+      expect(turns).toHaveLength(1);
+      expect(turns[0]!.element.tagName).toBe('SPAN');
+    }
   });
 
   it('assigns stable distinct colors and exposes a legend for every speaker', async () => {

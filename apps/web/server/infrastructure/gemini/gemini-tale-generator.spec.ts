@@ -60,7 +60,7 @@ describe('GeminiTaleGenerator', () => {
     const calls = vi.mocked(mockClient.interactions.create).mock.calls;
     expect(calls.length).toBeGreaterThan(0);
     const callArgs = calls[0]![0] as Record<string, unknown>;
-    expect(callArgs.system_instruction as string).toContain('Deutsch');
+    expect(callArgs.system_instruction as string).toContain('German');
     expect(callArgs.system_instruction as string).toContain('JSON');
     expect(callArgs.input as string).toContain('Rotkäppchen');
     expect(callArgs.input as string).toContain('Der Wolf ist vegetarisch');
